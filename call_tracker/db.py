@@ -1,12 +1,14 @@
-import pymysql
+import os
 
+import pymysql
+from dotenv import load_dotenv
+load_dotenv()
 mydb = pymysql.connect(
-host ='127.0.0.1',
-user ='root',
-password ='Shankar@123',
-database ='call_book',
-port=3306,
+host =os.getenv("DB_HOST"),
+user =os.getenv("DB_USER"),
+password =os.getenv("DB_PASSWORD"),
+database =os.getenv("DB_NAME"),
+port=int(os.getenv("DB_PORT")),
 )
 
 cursor=mydb.cursor()
-# print("Connection Done Successfully!!!")

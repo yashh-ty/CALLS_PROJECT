@@ -1,40 +1,87 @@
-from flask import Flask, request, jsonify
-from call_tracker.db import mydb, cursor
-from flask_cors import CORS
-app = Flask(__name__)
-CORS(app)
-@app.route('/submit_call', methods=['POST'])
-def submit_call():
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 
-    data = request.json
+from db import mydb, cursor
 
-    call_date = data.get("call_date")
-    student_name = data.get("student_name")
-    symbol = data.get("symbol")
-    call_type = data.get("call_type")
+app = FastAPI()
 
-    entry_price = float(data.get("entry_price"))
-    target1 = float(data.get("target1"))
-    target2 = float(data.get("target2"))
-    stoploss = float(data.get("stoploss"))
+# -----------------------------------
+# CORS
+# -----------------------------------
 
-    # -----------------------------
-    # Risk Reward Calculation
-    # -----------------------------
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-    risk = (entry_price - stoploss)
+# -----------------------------------
+# SUBMIT TRADE CALL API
+# -----------------------------------
 
-    reward = (target2 - entry_price)
+@app.post("/submit_call")
+def submit_call(data: dict):
 
-    # -----------------------------
-    # Insert Query
-    # -----------------------------
+    try:
 
-    insert_query = """
+        # -----------------------------
+        # FETCH DATA
+        # -----------------------------
 
-        INSERT INTO trade_calls (
+        doa = data.get("call_date")
 
-            call_date,
+        student_name = data.get("student_name")
+
+        symbol = data.get("symbol")
+
+        call_type = data.get("call_type")
+
+        entry_price = float(data.get("entry_price"))
+
+        target1 = float(data.get("target1"))
+
+        target2 = float(data.get("target2"))
+
+        stoploss = float(data.get("stoploss"))
+
+        # -----------------------------
+        # RISK REWARD CALCULATION
+        # -----------------------------
+
+        risk = abs(entry_price - stoploss)
+
+        reward = abs(target2 - entry_price)
+
+        # -----------------------------
+        # INSERT QUERY
+        # -----------------------------
+
+        insert_query = """
+
+            INSERT INTO trade_calls (
+
+                doa,
+                student_name,
+                symbol,
+                call_type,
+                entry_price,
+                target1,
+                target2,
+                stoploss,
+                risk,
+                reward
+
+            )
+
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+
+        """
+
+        values = (
+
+            doa,
             student_name,
             symbol,
             call_type,
@@ -47,34 +94,19 @@ def submit_call():
 
         )
 
-        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+        cursor.execute(insert_query, values)
 
-    """
+        mydb.commit()
 
-    values = (
+        return {
 
-        call_date,
-        student_name,
-        symbol,
-        call_type,
-        entry_price,
-        target1,
-        target2,
-        stoploss,
-        risk,
-        reward
+            "message": "Trade Call Added Successfully"
 
-    )
+        }
 
-    cursor.execute(insert_query, values)
+    except Exception as e:
 
-    mydb.commit()
-
-    return jsonify({
-
-        "message": "Trade Call Added Successfully"
-
-    })
-
-if __name__ == "__main__":
-    app.run(debug=True)
+        raise HTTPException(
+            status_code=500,
+            detail=str(e)
+        )
