@@ -1,5 +1,25 @@
 from db import mydb, cursor
 
+#Renaming active status of the calls to hold given today
+
+query1=''' UPDATE call_book.trade_calls
+SET status = 'HOLD' where status="ACTIVE"
+'''
+cursor.execute(query1)
+mydb.commit()
+print('Active calls updated to HOLD')
+
+
+#checking  expired calls
+query2=''' 
+UPDATE trade_calls
+SET status = 'EXPIRED',status_date=CURRENT_DATE()
+WHERE doa <= CURDATE() - INTERVAL 30 DAY
+AND status IN ('ENTRYZONE', 'HOLD')
+'''
+cursor.execute(query2)
+mydb.commit()
+print("EXPIRED CALLS UPDATED")
 
 
 
@@ -7,7 +27,7 @@ query = """
 
 SELECT id,doa,symbol,call_type,entry_price,target1,target2,stoploss,status,status_date
 FROM trade_calls
-WHERE status IN('ACTIVE',"HOLD","ENTRYZONE","TARGET1 HIT")
+WHERE status IN("HOLD","ENTRYZONE","TARGET1 HIT")
 """
 
 cursor.execute(query)
@@ -62,7 +82,6 @@ for i in active_calls:
         if call_type == "LONG":
 
                     status_rank = {
-                        "ACTIVE": 0,
                         "HOLD": 1,
                         "ENTRYZONE": 2,
                         "TARGET1 HIT": 3,
