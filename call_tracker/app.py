@@ -21,6 +21,12 @@ app.add_middleware(
 # SUBMIT TRADE CALL API
 # -----------------------------------
 
+
+@app.get("/")
+def home():
+    return FileResponse("form.html")
+
+
 @app.post("/submit_call")
 def submit_call(data: dict):
 
