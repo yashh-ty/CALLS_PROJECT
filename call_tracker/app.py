@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException,Body
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
-from db import mydb, cursor
+from db import mydb,cursor
 import bcrypt
 import random
 app = FastAPI()
@@ -328,7 +328,9 @@ async def send_otp(data: dict = Body(...)):
 
         otp = str(random.randint(100000, 999999))
 
+        connection = mydb
 
+        cursor = connection.cursor()
 
         # -----------------------------------
         # DELETE OLD OTP OF SAME EMAIL
@@ -397,6 +399,9 @@ def verify_otp(data: dict = Body(...)):
             AND otp=%s
 
         """
+        connection = mydb
+
+        cursor = connection.cursor()
 
         cursor.execute(query, (email, otp))
 
