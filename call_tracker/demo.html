@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Trade Call Tracker</title>
+
+    <!-- Bootstrap -->
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+
+        body{
+            background-color:#f5f5f5;
+        }
+
+        .main-container{
+
+            max-width:700px;
+            margin:40px auto;
+            background:white;
+            padding:30px;
+            border-radius:10px;
+            box-shadow:0px 0px 10px rgba(0,0,0,0.1);
+
+        }
+
+        h2{
+            text-align:center;
+            margin-bottom:25px;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="main-container">
+
+        <h2>Trade Call Form</h2>
+
+        <form id="tradeForm">
+
+            <!-- Call Date -->
+            <div class="mb-3">
+
+                <label class="form-label">Call Date</label>
+
+                <input type="date"
+                       class="form-control"
+                       id="call_date"
+                       required>
+
+            </div>
+
+            <!-- Student Name -->
+            <div class="mb-3">
+
+                <label class="form-label">Student Name</label>
+
+                <input type="text"
+                       class="form-control"
+                       id="student_name"
+                       placeholder="Enter Student Name"
+                       required>
+
+            </div>
+
+            <!-- Symbol -->
+            <div class="mb-3">
+
+                <label class="form-label">Stock Symbol</label>
+
+                <input type="text"
+                       class="form-control"
+                       id="symbol"
+                       placeholder="Example: RELIANCE"
+                       required>
+
+            </div>
+
+            <!-- Call Type -->
+            <div class="mb-3">
+
+                <label class="form-label">Call Type</label>
+
+                <select class="form-select"
+                        id="call_type"
+                        required>
+
+                    <option value="">Select</option>
+
+                    <option value="LONG">LONG</option>
+
+                    <option value="SHORT">SHORT</option>
+
+                </select>
+
+            </div>
+
+            <!-- Entry Price -->
+            <div class="mb-3">
+
+                <label class="form-label">Entry Price</label>
+
+                <input type="number"
+                       step="0.01"
+                       class="form-control"
+                       id="entry_price"
+                       required>
+
+            </div>
+
+            <!-- Target 1 -->
+            <div class="mb-3">
+
+                <label class="form-label">Target 1</label>
+
+                <input type="number"
+                       step="0.01"
+                       class="form-control"
+                       id="target1"
+                       required>
+
+            </div>
+
+            <!-- Target 2 -->
+            <div class="mb-3">
+
+                <label class="form-label">Target 2</label>
+
+                <input type="number"
+                       step="0.01"
+                       class="form-control"
+                       id="target2"
+                       required>
+
+            </div>
+
+            <!-- Stoploss -->
+            <div class="mb-3">
+
+                <label class="form-label">Stoploss</label>
+
+                <input type="number"
+                       step="0.01"
+                       class="form-control"
+                       id="stoploss"
+                       required>
+
+            </div>
+
+            <!-- Submit Button -->
+            <div class="d-grid">
+
+                <button type="submit"
+                        class="btn btn-primary">
+
+                    Submit Trade Call
+
+                </button>
+
+            </div>
+
+        </form>
+
+        <!-- Message -->
+        <div id="message" class="mt-3"></div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+document.getElementById("tradeForm").addEventListener("submit", function(event){
+
+    event.preventDefault();
+
+    // -------------------------
+    // FETCH VALUES
+    // -------------------------
+
+    let call_date = document.getElementById("call_date").value;
+
+    let student_name = document.getElementById("student_name").value.trim();
+
+    let symbol = document.getElementById("symbol").value.trim().toUpperCase();
+
+    let call_type = document.getElementById("call_type").value;
+
+    let entry_price = parseFloat(document.getElementById("entry_price").value);
+
+    let target1 = parseFloat(document.getElementById("target1").value);
+
+    let target2 = parseFloat(document.getElementById("target2").value);
+
+    let stoploss = parseFloat(document.getElementById("stoploss").value);
+
+    // -------------------------
+    // 🔥 DATE VALIDATION
+    // -------------------------
+
+    let today = new Date();
+    today.setHours(0,0,0,0);
+
+    let minDate = new Date();
+    minDate.setDate(today.getDate() - 15);
+    minDate.setHours(0,0,0,0);
+
+    let selectedDate = new Date(call_date);
+
+    if(!call_date){
+
+        showMessage("Call date is required", "danger");
+
+        return;
+    }
+
+    if(selectedDate > today){
+
+        showMessage("Call date cannot be in future", "danger");
+
+        return;
+    }
+
+    if(selectedDate < minDate){
+
+        showMessage("Call date must be within last 15 days", "danger");
+
+        return;
+    }
+
+    // -------------------------
+    // VALIDATION
+    // -------------------------
+
+    if(student_name === ""){
+
+        showMessage("Student name is required", "danger");
+
+        return;
+    }
+
+    if(symbol === ""){
+
+        showMessage("Stock symbol is required", "danger");
+
+        return;
+    }
+
+    // BUY Validation
+
+    if(call_type === "LONG"){
+
+        if(target1 <= entry_price){
+
+            showMessage("Target1 must be greater than Entry Price", "danger");
+
+            return;
+        }
+
+        if(target2 <= target1){
+
+            showMessage("Target2 must be greater than Target1", "danger");
+
+            return;
+        }
+
+        if(stoploss >= entry_price){
+
+            showMessage("Stoploss must be less than Entry Price", "danger");
+
+            return;
+        }
+    }
+
+    // SELL Validation
+
+    if(call_type === "SHORT"){
+
+        if(target1 >= entry_price){
+
+            showMessage("Target1 must be less than Entry Price", "danger");
+
+            return;
+        }
+
+        if(target2 >= target1){
+
+            showMessage("Target2 must be less than Target1", "danger");
+
+            return;
+        }
+
+        if(stoploss <= entry_price){
+
+            showMessage("Stoploss must be greater than Entry Price", "danger");
+
+            return;
+        }
+    }
+
+    // -------------------------
+    // RISK REWARD
+    // -------------------------
+
+    let risk = Math.abs(entry_price - stoploss);
+
+    let reward = Math.abs(target2 - entry_price);
+
+    // -------------------------
+    // CREATE JSON OBJECT
+    // -------------------------
+
+    let tradeData = {
+
+        call_date : call_date,
+
+        student_name : student_name,
+
+        symbol : symbol,
+
+        call_type : call_type,
+
+        entry_price : entry_price,
+
+        target1 : target1,
+
+        target2 : target2,
+
+        stoploss : stoploss,
+
+        risk : risk,
+
+        reward : reward
+
+    };
+
+    console.log(tradeData);
+
+    // -------------------------
+    // API CALL
+    // -------------------------
+
+    fetch("https://apidata-production-9300.up.railway.app/submit_call", {
+
+        method: "POST",
+
+        headers: {
+            "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify(tradeData)
+
+    })
+
+    .then(async response => {
+
+        let data = await response.json();
+
+        if(!response.ok){
+
+            throw new Error(data.detail || "Something went wrong");
+
+        }
+
+        return data;
+
+    })
+
+    .then(data => {
+
+        showMessage(data.message, "success");
+
+        console.log(data);
+
+        document.getElementById("tradeForm").reset();
+
+    })
+
+    .catch(error => {
+
+        console.error(error);
+
+        showMessage(error.message, "danger");
+
+    });
+
+});
+
+
+function showMessage(message, type){
+
+    document.getElementById("message").innerHTML = `
+
+        <div class="alert alert-${type}">
+
+            ${message}
+
+        </div>
+
+    `;
+
+}
+
+</script>
+
+</body>
+</html>
